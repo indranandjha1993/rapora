@@ -14,6 +14,7 @@ import axios from 'axios';
 import { redirect } from '@sveltejs/kit';
 import { env } from '$env/dynamic/private';
 import { env as publicEnv } from '$env/dynamic/public';
+import { serverApiOrigin } from '$lib/server/api-origin.js';
 import { generateCodeVerifier, generateCodeChallenge, generateState } from '$lib/utils/pkce.js';
 
 const GOOGLE_AUTH_URL = 'https://accounts.google.com/o/oauth2/v2/auth';
@@ -104,7 +105,7 @@ async function handleOAuthCallback(code, returnedState, cookies) {
   try {
     // Exchange code for tokens via Django backend
     // The backend handles the actual token exchange with Google using the client secret
-    const apiUrl = publicEnv.PUBLIC_DJANGO_API_URL;
+    const apiUrl = serverApiOrigin;
     console.log('Using API URL:', apiUrl);
     const response = await axios.post(
       `${apiUrl}/api/auth/google/callback/`,
@@ -198,7 +199,7 @@ export const actions = {
     }
 
     try {
-      const apiUrl = publicEnv.PUBLIC_DJANGO_API_URL;
+      const apiUrl = serverApiOrigin;
       await axios.post(
         `${apiUrl}/api/auth/magic-link/request/`,
         { email },

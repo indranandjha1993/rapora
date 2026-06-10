@@ -11,6 +11,7 @@ import axios from 'axios';
 import { redirect, fail } from '@sveltejs/kit';
 import { env } from '$env/dynamic/private';
 import { env as publicEnv } from '$env/dynamic/public';
+import { serverApiOrigin } from '$lib/server/api-origin.js';
 
 /** @type {import('@sveltejs/kit').ServerLoad} */
 export async function load({ url }) {
@@ -19,7 +20,7 @@ export async function load({ url }) {
     return { error: 'Missing invitation token.' };
   }
   try {
-    const apiUrl = publicEnv.PUBLIC_DJANGO_API_URL;
+    const apiUrl = serverApiOrigin;
     const res = await axios.get(`${apiUrl}/api/invitations/accept/`, {
       params: { token },
       timeout: 10000
@@ -42,7 +43,7 @@ export const actions = {
     if (!token) return fail(400, { error: 'Missing invitation token.' });
 
     try {
-      const apiUrl = publicEnv.PUBLIC_DJANGO_API_URL;
+      const apiUrl = serverApiOrigin;
       const res = await axios.post(
         `${apiUrl}/api/invitations/accept/`,
         { token },

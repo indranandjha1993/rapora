@@ -10,6 +10,7 @@
  */
 
 import { env as publicEnv } from '$env/dynamic/public';
+import { serverApiOrigin } from '$lib/server/api-origin.js';
 import { redirect, fail } from '@sveltejs/kit';
 import axios from 'axios';
 
@@ -29,7 +30,7 @@ export async function load({ cookies, locals }) {
       return { orgs: [] };
     }
 
-    const apiUrl = publicEnv.PUBLIC_DJANGO_API_URL;
+    const apiUrl = serverApiOrigin;
 
     // Fetch current user with organization memberships
     // The /api/auth/me/ endpoint returns user data with organizations array
@@ -76,7 +77,7 @@ export const actions = {
       throw redirect(307, '/login');
     }
 
-    const apiUrl = publicEnv.PUBLIC_DJANGO_API_URL;
+    const apiUrl = serverApiOrigin;
 
     try {
       // Call switch-org endpoint to get new tokens with org context

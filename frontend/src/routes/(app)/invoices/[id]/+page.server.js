@@ -5,6 +5,7 @@
 import { error, fail, redirect } from '@sveltejs/kit';
 import { apiRequest } from '$lib/api-helpers.js';
 import { env } from '$env/dynamic/public';
+import { serverApiOrigin } from '$lib/server/api-origin.js';
 
 /** @type {import('./$types').PageServerLoad} */
 export async function load({ params, locals, cookies }) {
@@ -360,7 +361,7 @@ export const actions = {
       }
 
       // Make request to Django backend for PDF
-      const apiUrl = env.PUBLIC_DJANGO_API_URL || 'http://localhost:8000';
+      const apiUrl = serverApiOrigin || 'http://localhost:8000';
       const response = await fetch(`${apiUrl}/api/invoices/${params.id}/pdf/`, {
         method: 'GET',
         headers: {

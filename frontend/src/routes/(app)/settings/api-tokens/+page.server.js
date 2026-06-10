@@ -1,12 +1,13 @@
 import { fail } from '@sveltejs/kit';
 import { env } from '$env/dynamic/public';
+import { serverApiOrigin } from '$lib/server/api-origin.js';
 import { apiRequest } from '$lib/api-helpers.js';
 
 // The MCP server runs on the user's own machine, so RAPORA_BASE_URL must be the
 // PUBLIC API host (e.g. https://api.rapora.io) — the same base the browser
 // talks to. PUBLIC_DJANGO_API_URL is that host with no /api suffix, which is
 // exactly what the MCP client expects (it appends /api/... itself).
-const apiBaseUrl = env.PUBLIC_DJANGO_API_URL || 'https://api.rapora.io';
+const apiBaseUrl = serverApiOrigin || 'https://api.rapora.io';
 
 /** @type {import('./$types').PageServerLoad} */
 export async function load({ cookies, locals }) {

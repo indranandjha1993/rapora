@@ -11,6 +11,7 @@
 
 import { env } from '$env/dynamic/private';
 import { env as publicEnv } from '$env/dynamic/public';
+import { serverApiOrigin } from '$lib/server/api-origin.js';
 import axios from 'axios';
 
 /** @type {import('./$types').PageServerLoad} */
@@ -54,7 +55,7 @@ export const actions = {
         };
       }
 
-      const apiUrl = publicEnv.PUBLIC_DJANGO_API_URL;
+      const apiUrl = serverApiOrigin;
 
       // Create organization and profile via Django API
       // Django's OrgProfileCreateView creates both org and profile
