@@ -120,6 +120,56 @@ def send_magic_link_email(token_id, raw_code=None):
 
 
 @shared_task
+def send_org_invitation_email(invitation_id):
+    """Email an organization invitation with an accept link."""
+    from common.models import OrgInvitation
+
+    invite = (
+        OrgInvitation.objects.select_related("org", "invited_by")
+        .filter(id=invitation_id)
+        .first()
+    )
+    if not invite:
+        return
+
+    email = invite.email.strip()
+    try:
+        validate_email(email)
+    except ValidationError:
+        logger.warning("Invitation email skipped: invalid email for %s", invitation_id)
+        return
+
+    accept_url = f"{settings.FRONTEND_URL}/invitations/accept?token={invite.token}"
+    inviter = (
+        invite.invited_by.email.split("@")[0]
+        if invite.invited_by and invite.invited_by.email
+        else "An administrator"
+    )
+    subject = f"You're invited to join {invite.org.name} on Rapora"
+    html_content = render_to_string(
+        "org_invitation_email.html",
+        {
+            "org_name": invite.org.name,
+            "role": invite.get_role_display(),
+            "inviter": inviter,
+            "accept_url": accept_url,
+        },
+    )
+
+    msg = EmailMessage(
+        subject,
+        html_content,
+        from_email=settings.DEFAULT_FROM_EMAIL,
+        to=[email],
+    )
+    msg.content_subtype = "html"
+    try:
+        msg.send()
+    except ClientError:
+        logger.exception("SES rejected invitation email %s", invitation_id)
+
+
+@shared_task
 def send_email_user_mentions(
     comment_id,
     called_from,

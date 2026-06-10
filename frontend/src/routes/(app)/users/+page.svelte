@@ -83,7 +83,11 @@
   $effect(() => {
     if (form?.success) {
       if (form.action === 'add_user') {
-        toast.success('Member added successfully');
+        toast.success(form.message || 'Invitation sent');
+      } else if (form.action === 'resend_invitation') {
+        toast.success(form.message || 'Invitation resent');
+      } else if (form.action === 'revoke_invitation') {
+        toast.success(form.message || 'Invitation revoked');
       } else if (form.action === 'create_team') {
         toast.success('Team created successfully');
         teamDialogOpen = false;
@@ -315,6 +319,55 @@
                 </Button>
               </form>
           </SectionCard>
+
+          <!-- Pending Invitations -->
+          {#if (data.invitations || []).length > 0}
+            <SectionCard>
+              {#snippet title()}
+                <div class="flex items-center gap-3">
+                  <div
+                    class="flex h-10 w-10 items-center justify-center rounded-lg bg-[var(--color-primary-light)] dark:bg-[var(--color-primary-default)]/15"
+                  >
+                    <UsersRound class="h-5 w-5 text-[var(--color-primary-default)]" />
+                  </div>
+                  <div>
+                    <h3 class="text-[16px] font-medium leading-[1.3] text-[color:var(--text-primary)]">
+                      Pending Invitations
+                    </h3>
+                    <p class="text-[12px] text-[color:var(--text-muted)]">
+                      {(data.invitations || []).length} awaiting acceptance
+                    </p>
+                  </div>
+                </div>
+              {/snippet}
+              <div class="flex flex-col gap-1">
+                {#each data.invitations || [] as invite (invite.id)}
+                  <div
+                    class="flex flex-wrap items-center justify-between gap-3 rounded-lg px-3 py-2.5 hover:bg-[color:var(--color-primary-light)]/40"
+                  >
+                    <div>
+                      <p class="text-sm font-medium text-[color:var(--text-primary)]">{invite.email}</p>
+                      <p class="text-[12px] text-[color:var(--text-muted)]">
+                        {invite.role} · {invite.is_expired ? 'Expired' : 'Pending'}
+                      </p>
+                    </div>
+                    <div class="flex items-center gap-2">
+                      <form method="POST" action="?/resend_invitation">
+                        <input type="hidden" name="invitation_id" value={invite.id} />
+                        <Button type="submit" variant="outline" size="sm">Resend</Button>
+                      </form>
+                      <form method="POST" action="?/revoke_invitation">
+                        <input type="hidden" name="invitation_id" value={invite.id} />
+                        <Button type="submit" variant="ghost" size="sm">
+                          <Trash2 class="h-4 w-4" />
+                        </Button>
+                      </form>
+                    </div>
+                  </div>
+                {/each}
+              </div>
+            </SectionCard>
+          {/if}
 
           <!-- Users Table -->
           <SectionCard>

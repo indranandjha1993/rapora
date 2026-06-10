@@ -115,6 +115,7 @@ class RequireOrgContext:
         "/api/auth/magic-link/verify/",
         "/api/auth/magic-link/verify-code/",
         "/api/org/",
+        "/api/invitations/accept/",
         "/admin/",
         "/swagger-ui/",
         "/schema/",

@@ -80,10 +80,11 @@ export async function load({ locals, cookies }) {
   const user = locals.user;
 
   try {
-    // Fetch users and teams in parallel
-    const [usersData, teamsData] = await Promise.all([
+    // Fetch users, teams, and pending invitations in parallel
+    const [usersData, teamsData, invitationsData] = await Promise.all([
       apiRequest('/users/', {}, { cookies, org }),
-      apiRequest('/teams/', {}, { cookies, org }).catch(() => ({ teams: [] }))
+      apiRequest('/teams/', {}, { cookies, org }).catch(() => ({ teams: [] })),
+      apiRequest('/invitations/', {}, { cookies, org }).catch(() => ({ invitations: [] }))
     ]);
 
     // Django returns: { active_users: {...}, inactive_users: {...}, roles: [...] }
@@ -149,6 +150,7 @@ export async function load({ locals, cookies }) {
       },
       users: allUsers,
       teams,
+      invitations: invitationsData.invitations || [],
       user: { id: user.id }
     };
   } catch (err) {
@@ -178,33 +180,64 @@ export const actions = {
         return fail(400, { error: 'Email and role are required' });
       }
 
-      // Create user via Django API
-      // Django endpoint: POST /api/users/
-      const userData = { email, role };
-
-      await apiRequest(
-        '/users/',
+      // Send an invitation — the person accepts to join the org.
+      // Django endpoint: POST /api/invitations/
+      const res = await apiRequest(
+        '/invitations/',
         {
           method: 'POST',
-          body: JSON.stringify(userData)
+          body: JSON.stringify({ email, role })
         },
         { cookies, org }
       );
 
-      return { success: true, action: 'add_user' };
+      return {
+        success: true,
+        action: 'add_user',
+        message: res?.message || `Invitation sent to ${email}.`
+      };
     } catch (err) {
-      console.error('Error adding user:', err);
-      // Check for specific error messages
-      if (
-        err.message.includes('already exists') ||
-        err.message.includes('already in organization')
-      ) {
-        return fail(400, { error: 'User already in organization' });
-      }
-      if (err.message.includes('not found')) {
-        return fail(404, { error: 'No user found with that email' });
-      }
-      return fail(500, { error: err.message || 'Failed to add user' });
+      console.error('Error inviting user:', err);
+      // Surface the backend's specific message (strip the "errors:" prefix the
+      // generic API helper prepends for {error:true, errors:"..."} responses).
+      const message = (err.message || 'Failed to send invitation').replace(/^errors:\s*/i, '');
+      return fail(400, { error: message });
+    }
+  },
+
+  /**
+   * Resend a pending invitation
+   */
+  resend_invitation: async ({ request, locals, cookies }) => {
+    const org = locals.org;
+    try {
+      const formData = await request.formData();
+      const id = formData.get('invitation_id')?.toString();
+      if (!id) return fail(400, { error: 'Invitation id required' });
+      const res = await apiRequest(
+        `/invitations/${id}/resend/`,
+        { method: 'POST' },
+        { cookies, org }
+      );
+      return { success: true, action: 'resend_invitation', message: res?.message || 'Invitation resent.' };
+    } catch (err) {
+      return fail(400, { error: (err.message || 'Failed to resend').replace(/^errors:\s*/i, '') });
+    }
+  },
+
+  /**
+   * Revoke (cancel) a pending invitation
+   */
+  revoke_invitation: async ({ request, locals, cookies }) => {
+    const org = locals.org;
+    try {
+      const formData = await request.formData();
+      const id = formData.get('invitation_id')?.toString();
+      if (!id) return fail(400, { error: 'Invitation id required' });
+      await apiRequest(`/invitations/${id}/`, { method: 'DELETE' }, { cookies, org });
+      return { success: true, action: 'revoke_invitation', message: 'Invitation revoked.' };
+    } catch (err) {
+      return fail(400, { error: (err.message || 'Failed to revoke').replace(/^errors:\s*/i, '') });
     }
   },
 

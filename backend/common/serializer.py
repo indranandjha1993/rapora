@@ -21,6 +21,7 @@ from common.models import (
     Document,
     Notification,
     Org,
+    OrgInvitation,
     PersonalAccessToken,
     Profile,
     Tags,
@@ -462,6 +463,38 @@ class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ["id", "email", "name", "profile_pic"]
+
+
+class CreateInvitationSerializer(serializers.Serializer):
+    """Validate an Add-Member request: an email + a role."""
+
+    email = serializers.EmailField()
+    role = serializers.ChoiceField(choices=["ADMIN", "USER"], default="USER")
+
+    def validate_email(self, email):
+        return email.strip().lower()
+
+
+class OrgInvitationSerializer(serializers.ModelSerializer):
+    invited_by_email = serializers.SerializerMethodField()
+    is_expired = serializers.BooleanField(read_only=True)
+
+    class Meta:
+        model = OrgInvitation
+        fields = [
+            "id",
+            "email",
+            "role",
+            "status",
+            "invited_by_email",
+            "created_at",
+            "expires_at",
+            "is_expired",
+        ]
+
+    @extend_schema_field(serializers.CharField)
+    def get_invited_by_email(self, obj):
+        return obj.invited_by.email if obj.invited_by else None
 
 
 class ProfileSerializer(serializers.ModelSerializer):

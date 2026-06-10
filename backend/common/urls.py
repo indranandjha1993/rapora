@@ -43,6 +43,12 @@ from common.views.user_views import (
     UsersListView,
     UserStatusView,
 )
+from common.views.invitation_views import (
+    AcceptInvitationView,
+    InvitationDetailView,
+    InvitationResendView,
+    OrgInvitationListCreateView,
+)
 
 app_name = "api_common"
 
@@ -87,6 +93,11 @@ urlpatterns = [
     path("users/", UsersListView.as_view()),
     path("user/<str:pk>/", UserDetailView.as_view()),
     path("user/<str:pk>/status/", UserStatusView.as_view()),
+    # Organization invitations (invite by email -> accept)
+    path("invitations/", OrgInvitationListCreateView.as_view(), name="invitations"),
+    path("invitations/accept/", AcceptInvitationView.as_view(), name="invitation_accept"),
+    path("invitations/<uuid:pk>/", InvitationDetailView.as_view(), name="invitation_detail"),
+    path("invitations/<uuid:pk>/resend/", InvitationResendView.as_view(), name="invitation_resend"),
     # Documents
     path("documents/", DocumentListView.as_view()),
     path("documents/<str:pk>/", DocumentDetailView.as_view()),

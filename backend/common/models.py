@@ -599,6 +599,67 @@ class MagicLinkToken(models.Model):
         return f"MagicLink({self.email}, delivery={self.delivery}, used={self.is_used})"
 
 
+def generate_invitation_token():
+    """Return a new unguessable invitation token string."""
+    return secrets.token_urlsafe(48)
+
+
+class OrgInvitation(models.Model):
+    """Invitation for a person to join an organization with a given role.
+
+    Deliberately NOT RLS-protected: the accept flow runs with no org context
+    (the invitee isn't a member yet), so the row is looked up by its
+    unguessable `token`. A user can be invited to many orgs over time, but only
+    one PENDING invite per (org, email) is allowed (enforced in the view).
+    """
+
+    STATUS_PENDING = "pending"
+    STATUS_ACCEPTED = "accepted"
+    STATUS_REVOKED = "revoked"
+    STATUS_CHOICES = (
+        (STATUS_PENDING, "Pending"),
+        (STATUS_ACCEPTED, "Accepted"),
+        (STATUS_REVOKED, "Revoked"),
+    )
+
+    id = models.UUIDField(default=uuid.uuid4, primary_key=True)
+    org = models.ForeignKey(
+        "common.Org", on_delete=models.CASCADE, related_name="invitations"
+    )
+    email = models.EmailField(db_index=True)
+    role = models.CharField(max_length=50, choices=ROLES, default="USER")
+    token = models.CharField(
+        max_length=96, unique=True, db_index=True, default=generate_invitation_token
+    )
+    status = models.CharField(
+        max_length=10, choices=STATUS_CHOICES, default=STATUS_PENDING
+    )
+    invited_by = models.ForeignKey(
+        "common.User",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="sent_invitations",
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    expires_at = models.DateTimeField()
+    accepted_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        db_table = "org_invitation"
+        ordering = ("-created_at",)
+        indexes = [models.Index(fields=["org", "status"])]
+
+    def __str__(self):
+        return f"OrgInvitation({self.email} -> {self.org_id}, {self.status})"
+
+    @property
+    def is_expired(self):
+        from django.utils import timezone
+
+        return self.expires_at < timezone.now()
+
+
 # Activity Tracking for Recent Activities Dashboard
 
 
