@@ -110,6 +110,23 @@
     isTeamLoading = false;
   });
 
+  // Invitation forms use enhance so feedback shows as a toast (no full-page
+  // reload / flicker). We show the toast explicitly and refresh the lists,
+  // without applyAction, so the $effect above doesn't double-fire for these.
+  function inviteEnhance() {
+    return async ({ result, formElement }) => {
+      if (result.type === 'failure') {
+        toast.error(result.data?.error || 'Something went wrong');
+      } else if (result.type === 'success') {
+        toast.success(result.data?.message || 'Done');
+        formElement?.reset();
+      } else if (result.type === 'error') {
+        toast.error(result.error?.message || 'Request failed');
+      }
+      await invalidateAll();
+    };
+  }
+
   /**
    * Open dialog to create a new team
    */
@@ -289,6 +306,7 @@
               <form
                 method="POST"
                 action="?/add_user"
+                use:enhance={inviteEnhance}
                 class="flex flex-col gap-4 sm:flex-row sm:items-end"
               >
                 <div class="flex-1">
@@ -352,11 +370,11 @@
                       </p>
                     </div>
                     <div class="flex items-center gap-2">
-                      <form method="POST" action="?/resend_invitation">
+                      <form method="POST" action="?/resend_invitation" use:enhance={inviteEnhance}>
                         <input type="hidden" name="invitation_id" value={invite.id} />
                         <Button type="submit" variant="outline" size="sm">Resend</Button>
                       </form>
-                      <form method="POST" action="?/revoke_invitation">
+                      <form method="POST" action="?/revoke_invitation" use:enhance={inviteEnhance}>
                         <input type="hidden" name="invitation_id" value={invite.id} />
                         <Button type="submit" variant="ghost" size="sm">
                           <Trash2 class="h-4 w-4" />
