@@ -8,8 +8,9 @@
  */
 
 import { env } from '$env/dynamic/public';
+import { serverApiOrigin } from '$lib/server/api-origin.js';
 
-const API_BASE_URL = `${env.PUBLIC_DJANGO_API_URL}/api`;
+const API_BASE_URL = `${serverApiOrigin}/api`;
 
 /** @type {import('./$types').RequestHandler} */
 export async function GET({ cookies, request }) {
