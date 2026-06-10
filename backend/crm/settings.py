@@ -336,8 +336,33 @@ SECURE_CONTENT_TYPE_NOSNIFF = True
 
 DEFAULT_AUTO_FIELD = "django.db.models.AutoField"
 
-STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
-# STATICFILES_STORAGE = 'django.contrib.staticfiles.storage.ManifestStaticFilesStorage'
+# File storage. Media/attachments go to an S3-compatible bucket (e.g. MinIO)
+# when AWS_STORAGE_BUCKET_NAME is set; otherwise the local filesystem. Static
+# files are always served by whitenoise. (Django requires a single STORAGES
+# dict — don't also set the legacy STATICFILES_STORAGE / DEFAULT_FILE_STORAGE.)
+AWS_STORAGE_BUCKET_NAME = os.environ.get("AWS_STORAGE_BUCKET_NAME", "")
+_default_storage = {"BACKEND": "django.core.files.storage.FileSystemStorage"}
+if AWS_STORAGE_BUCKET_NAME:
+    AWS_ACCESS_KEY_ID = os.environ.get("AWS_ACCESS_KEY_ID", "")
+    AWS_SECRET_ACCESS_KEY = os.environ.get("AWS_SECRET_ACCESS_KEY", "")
+    AWS_S3_ENDPOINT_URL = os.environ.get("AWS_S3_ENDPOINT_URL") or None
+    AWS_S3_REGION_NAME = os.environ.get("AWS_S3_REGION_NAME", "us-east-1")
+    AWS_S3_ADDRESSING_STYLE = "path"  # MinIO and most S3-compatibles need path-style
+    AWS_S3_SIGNATURE_VERSION = "s3v4"
+    AWS_QUERYSTRING_AUTH = (
+        os.environ.get("AWS_QUERYSTRING_AUTH", "True").lower() == "true"
+    )
+    AWS_QUERYSTRING_EXPIRE = int(os.environ.get("AWS_QUERYSTRING_EXPIRE", "3600"))
+    AWS_DEFAULT_ACL = None
+    AWS_S3_FILE_OVERWRITE = False
+    _default_storage = {"BACKEND": "storages.backends.s3.S3Storage"}
+
+STORAGES = {
+    "default": _default_storage,
+    "staticfiles": {
+        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage"
+    },
+}
 
 SIMPLE_JWT = {
     # Security: Reduced token lifetimes
