@@ -5,8 +5,10 @@ RUN corepack enable && corepack prepare pnpm@latest --activate
 
 WORKDIR /app
 
-# Install dependencies (layer cached)
-COPY package.json pnpm-lock.yaml* ./
+# Install dependencies (layer cached). pnpm-workspace.yaml carries the
+# allowBuilds / onlyBuiltDependencies settings that let approved packages
+# (e.g. @sentry/cli) run their build scripts — without it pnpm aborts.
+COPY package.json pnpm-lock.yaml* pnpm-workspace.yaml ./
 RUN pnpm install --frozen-lockfile || pnpm install
 
 EXPOSE 5173
