@@ -71,7 +71,7 @@ The backend uses [`uv`](https://docs.astral.sh/uv/) for Python dependency manage
 ```bash
 # Clone the repository
 git clone https://github.com/indranandjha1993/rapora.git
-cd Django-CRM/backend
+cd rapora/backend
 
 # Install uv (one time, system-wide)
 curl -LsSf https://astral.sh/uv/install.sh | sh
@@ -150,29 +150,35 @@ The agent authenticates **as you** and inherits your role, org and RLS scope —
 
 ## Docker Setup
 
-Run the full stack (backend, frontend, PostgreSQL, Redis, Celery) with a single command:
+The compose file runs the application services (Django API, Celery worker + beat,
+SvelteKit frontend). **PostgreSQL and Redis are external** — bring your own and
+set their connection details in `.env`.
 
 ```bash
-# Start all services (first run will build images)
-# An admin user (admin@localhost / admin) is created automatically
+# 1. Configure environment
+cp .env.example .env
+# Edit .env — set SECRET_KEY, DBHOST/DBNAME/DBUSER/DBPASSWORD, and Redis URLs.
+
+# 2. Create the database and a NON-superuser role (RLS must be enforced).
+#    See RLS_SETUP.md for the exact SQL.
+
+# 3. Start the stack (first run builds images; migrations run automatically,
+#    and an admin user from ADMIN_EMAIL / ADMIN_PASSWORD is created)
 docker compose up --build
 
 # (Optional) Load sample data
 docker compose exec backend python manage.py seed_data --email admin@example.com
 ```
 
-Once running:
+Once running (ports configurable via `BACKEND_PORT` / `FRONTEND_PORT` in `.env`):
 - **Frontend**: http://localhost:5173
 - **API / Swagger**: http://localhost:8000/swagger-ui/
-- **PostgreSQL**: localhost:5432
-- **Redis**: localhost:6379
 
 ### Daily workflow
 
 ```bash
 docker compose up           # start all services (code changes auto-reload)
 docker compose down         # stop all services
-docker compose down -v      # stop and delete all data (full reset)
 ```
 
 ### Running commands inside containers
@@ -183,18 +189,22 @@ docker compose exec backend python -m pytest
 docker compose exec backend python manage.py manage_rls --status
 ```
 
-### Custom environment overrides
+### Environment configuration
 
-The default env vars live in `.env.docker` (committed). To override locally without touching git:
+All configuration lives in a single `.env` file (gitignored). Copy the template
+and edit it:
 
-1. Copy `.env.docker` to `.env.docker.local`
-2. Edit values as needed
-3. Update `env_file` in `docker-compose.yml` to point to `.env.docker.local`
+```bash
+cp .env.example .env
+```
+
+`.env.example` documents every variable, including the external PostgreSQL and
+Redis connection settings and the publishable host ports.
 
 ## Project Structure
 
 ```
-Django-CRM/
+rapora/
 ├── backend/                 # Django REST API
 │   ├── accounts/           # Accounts module
 │   ├── cases/              # Cases module
@@ -219,10 +229,10 @@ Django-CRM/
 │   ├── backend/
 │   │   └── entrypoint.sh  # DB wait + migrate + runserver
 │   └── postgres/
-│       └── init-rls-user.sql # Creates non-superuser for RLS
+│       └── init-rls-user.sql # Helper SQL to create the non-superuser RLS role
 ├── Dockerfile              # Backend / Celery image
-├── docker-compose.yml      # Full-stack dev environment
-└── .env.docker             # Docker env vars (dev defaults)
+├── docker-compose.yml      # Application stack (external Postgres + Redis)
+└── .env.example            # Environment template (copy to .env)
 ```
 
 ## Multi-Tenancy & Security
@@ -341,10 +351,4 @@ We welcome contributions! Please see our contributing guidelines for details.
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## Contributors
-
-This project exists thanks to all the people who contributed.
-
-![Contributors](https://opencollective.com/django-crm/contributors.svg?width=890&button=false)
 

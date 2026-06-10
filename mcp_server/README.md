@@ -30,7 +30,7 @@ isolation and adds no privileges of its own.
 
 - Python 3.11+
 - [`uv`](https://docs.astral.sh/uv/)
-- A reachable Rapora backend (the community Django-CRM API)
+- A reachable Rapora backend (the community Rapora API)
 - A Rapora Personal Access Token (`rapora_pat_…`)
 
 ## Install & run
@@ -77,7 +77,7 @@ installed and the app is served under ASGI (uvicorn). Clients then connect to
 `https://<your-api-host>/mcp` — see the hosted client config below.
 
 ```bash
-# from Django-CRM/backend
+# from Rapora/backend
 uv sync --extra mcp                      # installs fastmcp + this package (editable)
 RAPORA_BASE_URL=http://127.0.0.1:8000 \
   uv run uvicorn crm.asgi:application --host 0.0.0.0 --port 8000

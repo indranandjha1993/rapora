@@ -9,7 +9,7 @@ from tasks.models import Task
 
 @shared_task
 def send_email(
-    task_id, recipients, org_id, domain="demo.django-crm.io", protocol="http"
+    task_id, recipients, org_id, domain="localhost", protocol="http"
 ):
     set_rls_context(org_id)
     task = Task.objects.filter(id=task_id).first()

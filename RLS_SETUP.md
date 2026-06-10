@@ -34,11 +34,11 @@ CREATE DATABASE rapora;
 sudo -u postgres psql
 
 -- Create non-superuser for the application
-CREATE USER crm_user WITH PASSWORD 'crm_password';
+CREATE USER rapora WITH PASSWORD 'change-me';
 
 -- Verify user is NOT a superuser
-SELECT usename, usesuper FROM pg_user WHERE usename = 'crm_user';
--- Should show: crm_user | f
+SELECT usename, usesuper FROM pg_user WHERE usename = 'rapora';
+-- Should show: rapora | f
 ```
 
 ---
@@ -50,20 +50,20 @@ SELECT usename, usesuper FROM pg_user WHERE usename = 'crm_user';
 \c rapora
 
 -- Grant connection rights
-GRANT CONNECT ON DATABASE rapora TO crm_user;
+GRANT CONNECT ON DATABASE rapora TO rapora;
 
 -- Grant schema privileges (required for migrations to create/alter tables)
-GRANT ALL ON SCHEMA public TO crm_user;
+GRANT ALL ON SCHEMA public TO rapora;
 
 -- Grant table permissions (SELECT, INSERT, UPDATE, DELETE)
-GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO crm_user;
+GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO rapora;
 
 -- Grant sequence permissions (for auto-increment fields)
-GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO crm_user;
+GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO rapora;
 
 -- Grant default privileges for future tables
-ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES TO crm_user;
-ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON SEQUENCES TO crm_user;
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES TO rapora;
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON SEQUENCES TO rapora;
 ```
 
 > **Note:** Granting schema/table privileges does NOT weaken RLS. These control DDL operations (CREATE/ALTER/DROP), while RLS controls row-level access. Only `BYPASSRLS` attribute or superuser status bypasses RLS.
@@ -76,8 +76,8 @@ Set these environment variables for Django:
 
 ```bash
 export DBNAME=rapora
-export DBUSER=crm_user
-export DBPASSWORD=crm_password
+export DBUSER=rapora
+export DBPASSWORD=change-me
 export DBHOST=localhost
 export DBPORT=5432
 ```
@@ -86,8 +86,8 @@ Or in your `.env` file:
 
 ```env
 DBNAME=rapora
-DBUSER=crm_user
-DBPASSWORD=crm_password
+DBUSER=rapora
+DBPASSWORD=change-me
 DBHOST=localhost
 DBPORT=5432
 ```
@@ -117,7 +117,7 @@ Expected output:
 ```
 RLS Status:
 
-  Database user "crm_user" is not a superuser - RLS will be enforced
+  Database user "rapora" is not a superuser - RLS will be enforced
 
   lead: ENABLED (forced)
   accounts: ENABLED (forced)
@@ -136,7 +136,7 @@ python manage.py manage_rls --verify-user
 Expected output:
 ```
 Verifying database user...
-  Current user: crm_user
+  Current user: rapora
   Is superuser: False
   Can create DB: False
 Database user is properly configured for RLS
@@ -205,8 +205,8 @@ python manage.py migrate common
 Grant permissions again (Step 3), especially after creating new tables:
 
 ```sql
-GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO crm_user;
-GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO crm_user;
+GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO rapora;
+GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO rapora;
 ```
 
 ---

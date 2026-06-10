@@ -93,7 +93,7 @@ WSGI_APPLICATION = "crm.wsgi.application"
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.postgresql",
-        "NAME": os.environ.get("DBNAME", "crm_db"),
+        "NAME": os.environ.get("DBNAME", "rapora"),
         "USER": os.environ.get("DBUSER", "postgres"),
         "PASSWORD": os.environ.get("DBPASSWORD", "postgres"),
         "HOST": os.environ.get("DBHOST", "localhost"),

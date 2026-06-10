@@ -1,4 +1,4 @@
-"""ASGI entrypoint for Django-CRM.
+"""ASGI entrypoint for Rapora.
 
 Mirror of `wsgi.py` for ASGI servers (uvicorn, hypercorn, daphne). Required
 for the in-app notifications SSE stream — async views serving long-lived
