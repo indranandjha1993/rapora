@@ -22,7 +22,11 @@ COPY --from=ghcr.io/astral-sh/uv:0.11 /uv /usr/local/bin/uv
 
 # Install Python dependencies into /app/.venv (layer cached on lockfile changes)
 COPY backend/pyproject.toml backend/uv.lock backend/.python-version ./
-RUN uv sync --frozen --no-install-project
+# `rapora-mcp` is an editable path dep (`../mcp_server`) pulled in by the `mcp`
+# extra. Copy the source so `uv sync --extra mcp` can install it editable — this
+# is what lets crm.asgi mount the Rapora MCP server at /mcp under ASGI.
+COPY mcp_server /mcp_server
+RUN uv sync --frozen --no-install-project --extra mcp
 
 # Copy backend source
 COPY backend/ .

@@ -29,5 +29,5 @@ python manage.py create_default_admin
 echo "Collecting static files..."
 python manage.py collectstatic --noinput
 
-echo "Starting development server..."
-exec python manage.py runserver 0.0.0.0:8000
+echo "Starting ASGI server (uvicorn: Django + Rapora MCP at /mcp)..."
+exec uvicorn crm.asgi:application --host 0.0.0.0 --port 8000 --proxy-headers --forwarded-allow-ips='*'

@@ -22,6 +22,7 @@ services:
     volumes:
       - ./backend:/app
       - /app/.venv                      # preserve image-built venv over the bind mount
+      - ./mcp_server:/mcp_server        # editable rapora-mcp source (live edits reflect)
       - ./docker/backend/entrypoint.sh:/entrypoint.sh:ro
     ports:
       - "${BACKEND_PORT:-8000}:8000"
